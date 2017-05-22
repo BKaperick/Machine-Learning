@@ -7,16 +7,16 @@ def sigmoid(z):
 
 def cost(output_emp, output_act):
     ''' Mean squared error between empirical and actual outputs '''
-    n = len(output_emp)
+    n = np.shape(output_emp)[1]
     cost_val = 0
     for i in range(n):
-        cost_val += np.linalg.norm(output_emp[i] - output_act[i])**2
+        cost_val += np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
 
     # Standard normalization factor
     cost_val *= (.5/n)
-
     return cost_val
 
+#def gradientDescent(
 
 class Network:
     ''' 
@@ -83,13 +83,19 @@ class Network:
         inputs - each column is a new input sample
         '''
         n = np.shape(inputs)[1]
-        outputs = np.empty(n)
+        out_dim = self.layer_sizes[-1]
+
+        # Reshape output scalars to the decimal encoding
+        correct_outputs_reshaped = np.zeros((out_dim,n))
+        for i,val in enumerate(correct_outputs):
+            correct_outputs_reshaped[val,i] = 1
+            
+        outputs = np.empty((out_dim,n))
         for i in range(n): 
-            # Currently, cost increases only if the maximum output 
-            # is incorrect, due to the interpretation of the outputs
+            # Cost increases as a smooth function of changes in w,b
             output_val = self.run(inputs[:,i], weights)
-            outputs[i] = np.argmax(output_val)
-        return cost(outputs, correct_outputs)
+            outputs[:,i] = output_val
+        return cost(outputs, correct_outputs_reshaped)
                 
 
 class Neuron:
