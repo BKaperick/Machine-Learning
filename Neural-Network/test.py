@@ -5,24 +5,41 @@ from neuralnet import *
 # Outputs are a length-10 numpy array corresponding to 10 decimal digits
 layer_map = [784,15,10]
 
-# Initialize network
-network = Network(layer_map)
 
 # Load data
-num_samples = 15
-training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True)
+num_samples = 500
+training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=True)
 
 
 # Initialize weights randomly
 weights = [None]
-for i,size in enumerate(network.layer_sizes[:-1]):
-    next_size = network.layer_sizes[i+1]
+for i,size in enumerate(layer_map[:-1]):
+    next_size = layer_map[i+1]
     weights.append(np.random.rand(next_size, size))
 
 biases = []
-for i,size in enumerate(network.layer_sizes):
+for i,size in enumerate(layer_map):
     biases.append(np.random.randn(size))
 
-# Test that everything appears to be working
-out = network.cost(training_images, weights, biases, training_labels)
-print(out)
+# Initialize network
+network = Network(layer_map, weights, biases)
+
+def label_to_flag_vec(labels):
+    # Reshape output scalars to the decimal encoding
+    label_vecs = np.zeros((10,len(labels)))
+    for i,val in enumerate(labels):
+        label_vecs[int(val),i] = 1
+    return label_vecs
+
+training_label_vecs = label_to_flag_vec(training_labels)
+test_label_vecs = label_to_flag_vec(test_labels)
+
+epochs = 10
+eta = .1
+
+# Train network weights and labels on training data
+network.gradient_descent(training_images, training_label_vecs, epochs, eta, test_inputs = test_images, test_outputs = test_label_vecs)
+
+## Test that everything appears to be working
+#out = network.cost(training_images, training_label_vecs)
+#print(out)
