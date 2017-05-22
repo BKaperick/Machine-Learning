@@ -16,7 +16,22 @@ def cost(output_emp, output_act):
     cost_val *= (.5/n)
     return cost_val
 
-#def gradientDescent(
+
+#def gradientDescent(training_data, epochs, eta, test_data=None):
+#    '''
+#    Performs gradient descent on the given data
+#    training_data - Array of 2-tuples of the form (input, output)
+#    epochs - Number of epochs to train for
+#    eta - Learning rate
+#    test_data - Evaluates network after each epoch, printing progress
+#    '''
+#    if test_data:
+#        n_test = len(test_data)
+#    n = len(training_data)
+#    for j in range(epochs):
+        
+
+
 
 class Network:
     ''' 
@@ -30,90 +45,89 @@ class Network:
                 with layers[0] as input and layers[-1] as output
         '''
         self.layer_sizes = layers
+        self.input_dim = layers[0]
+        self.output_dim = layers[-1]
         self.layers = []
-        self.init_neurons()
 
-    def init_neurons(self):
+    def init_layers(self, weights, bias):
         ''' Initialize the neurons, the layers, and their connections '''
+        self.layers = []
         for i,layer in enumerate(self.layer_sizes):
-            
-            # Ordering is irrelevant
-            new_layer = [Neuron(self, 0) for _ in range(layer)]
-            
-            # Update node information
-            if i > 0:
-                for node in new_layer:
-                    node.prev_layer = self.layers[-1]
-                for node in self.layers[-1]:
-                    node.next_layer = new_layer
-            
-            # Add new layer to the network
-            self.layers.append(new_layer)
+            if i == 0:
+                self.layers.append(InputLayer(bias[i]))
+            else:
+                self.layers.append(Layer(weights[i], bias[i]))
     
-    def eval_layer(self, layer, inputs, weights):
-        ''' Apply inputs and weights to this layer -
-        weights - ith column is a numpy array for the weights of the ith node's inputs
-        '''
-        out_vals = np.empty(len(layer), dtype=float);
-        for i,node in enumerate(layer):
-            out_vals[i] = node.evaluate(inputs, weights[:,i])
-        return out_vals
-
-    def run(self, inputs, weights):
+    def update_layers(self, weights, bias):
+        ''' Update weights and biases in the neuron layers '''
+        for i,layer in enumerate(self.layer_sizes):
+            self.layers.append(Layer(weights[i], bias[i]))
+    
+    def run(self, inputs):
         '''
         Feed inputs into the network as the input layer values, and return
         the output layer's values
         '''
-        in_vals = inputs
-        for i,layer in enumerate(self.layers):
-            # First layer is input layer, so no evaluation is done
-            if i == 0:
-                continue
+        for layer in self.layers:
+            
             # Inputs for the next layer are precisely the outputs of this layer
-            in_vals = self.eval_layer(layer, in_vals, weights[i-1])
+            inputs = layer.evaluate(inputs)
 
-        out_vals = in_vals
-        return out_vals
+        return inputs
                     
-    def cost(self, inputs, weights, correct_outputs):
+    def cost(self, inputs, weights, biases, correct_outputs):
         '''
         Given a set of input data and correct outputs,
         compute MSE of the difference in the actual
         and expected outputs -
         inputs - each column is a new input sample
         '''
+        
+        if self.layers:
+            self.update_layers(weights, biases) 
+        else:
+            self.init_layers(weights, biases) 
+
         n = np.shape(inputs)[1]
-        out_dim = self.layer_sizes[-1]
 
         # Reshape output scalars to the decimal encoding
-        correct_outputs_reshaped = np.zeros((out_dim,n))
+        correct_outputs_reshaped = np.zeros((self.output_dim,n))
         for i,val in enumerate(correct_outputs):
-            correct_outputs_reshaped[val,i] = 1
+            correct_outputs_reshaped[int(val),i] = 1
             
-        outputs = np.empty((out_dim,n))
+        outputs = np.empty((self.output_dim, n))
         for i in range(n): 
+            
             # Cost increases as a smooth function of changes in w,b
-            output_val = self.run(inputs[:,i], weights)
+            output_val = self.run(inputs[:,i])
             outputs[:,i] = output_val
+        
+        # Return MSE
         return cost(outputs, correct_outputs_reshaped)
                 
-
-class Neuron:
-    '''
-    Sigmoid neurons which evaluate inputs with logistic function
-    '''
-    def __init__(self, network, bias):
-        self.net = network
+class Layer:
+    ''' Encodes a layer of Sigmoid neurons with a set of weights and biases '''
+    def __init__(self, weights, bias):
+        self.length = len(bias)
         self.bias = bias
-        self.prev_layer = set()
-        self.next_layer = set()
+        self.weights = weights
 
-    def evaluate(self, inputs, weights):
-        return sigmoid(np.dot(inputs, weights) + self.bias)
+    def evaluate(self, inputs):
+        return sigmoid(np.matmul(self.weights, inputs) + self.bias)
+
+
+class InputLayer(Layer):
+    ''' Subclass of Layer whos evaluation is just the identity mapping '''
+    def __init__(self, bias):
+        self.length = len(bias)
+        self.bias = bias
+
+    def evaluate(self, inputs):
+        return inputs
+
 
 # 28x28 pixel images are encoded as a length-784 numpy array
-# Outputs are a length-10 numpy array corresponding to 
-# 10 decimal digits
+# Outputs are a length-10 numpy array corresponding to 10 decimal digits
 layer_map = [784,15,10]
 
 # Initialize network
@@ -125,16 +139,15 @@ training_labels, training_images, test_labels, test_images = open_data.get_data(
 
 
 # Initialize weights randomly
-weights = []
+weights = [None]
 for i,size in enumerate(network.layer_sizes[:-1]):
     next_size = network.layer_sizes[i+1]
-    weights.append(np.random.rand(size, next_size))
+    weights.append(np.random.rand(next_size, size))
+
+biases = []
+for i,size in enumerate(network.layer_sizes):
+    biases.append(np.random.randn(size))
 
 # Test that everything appears to be working
-out = network.cost(training_images, weights, training_labels)
+out = network.cost(training_images, weights, biases, training_labels)
 print(out)
-
-
-
-
-
