@@ -3,11 +3,11 @@ from neuralnet import *
 
 # 28x28 pixel images are encoded as a length-784 numpy array
 # Outputs are a length-10 numpy array corresponding to 10 decimal digits
-layer_map = [784,15,10]
+layer_map = [784,15,5,10]
 
 
 # Load data
-num_samples = 500
+num_samples = 5000
 training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=True)
 
 
@@ -17,8 +17,11 @@ for i,size in enumerate(layer_map[:-1]):
     next_size = layer_map[i+1]
     weights.append(np.random.rand(next_size, size))
 
-biases = []
-for i,size in enumerate(layer_map):
+print([np.shape(w) for w in weights])
+
+biases = [None]
+for i,size in enumerate(layer_map[1:]):
+    
     biases.append(np.random.randn(size))
 
 # Initialize network
@@ -34,11 +37,13 @@ def label_to_flag_vec(labels):
 training_label_vecs = label_to_flag_vec(training_labels)
 test_label_vecs = label_to_flag_vec(test_labels)
 
-epochs = 10
+epochs = 50
 eta = .1
+batch_size = 50
 
 # Train network weights and labels on training data
-network.gradient_descent(training_images, training_label_vecs, epochs, eta, test_inputs = test_images, test_outputs = test_label_vecs)
+network.stochastic_gradient_descent(training_images, training_label_vecs, batch_size, epochs, eta, test_images, test_label_vecs)
+print(network.cost(test_images, test_label_vecs))
 
 ## Test that everything appears to be working
 #out = network.cost(training_images, training_label_vecs)

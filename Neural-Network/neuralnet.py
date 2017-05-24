@@ -1,5 +1,6 @@
 import numpy as np
 import open_data
+import random
 
 def sigmoid(z):
     ''' Just a logistic function component-wise on z '''
@@ -47,7 +48,7 @@ class Network:
         self.layers = []
         for i,layer in enumerate(self.layer_sizes):
             if i == 0:
-                self.layers.append(InputLayer(bias[i]))
+                self.layers.append(InputLayer(self.layer_sizes[0]))
             else:
                 self.layers.append(Layer(weights[i], bias[i]))
     
@@ -84,8 +85,8 @@ class Network:
                 inputs = layer.evaluate(inputs)
 
         return inputs
-
-    def backpropagate(self, inputs, correct_outputs, weights = None, biases = None):
+    
+    def back_propagate_vectorized(self, inputs, correct_outputs, weights = None, biases = None):
         layer_outputs = self.run(inputs, weights, biases, log = True)
         last_weighted_input = np.matmul(self.layers[-1].weight, layer_outputs[-2]) + self.layers[-1].bias
         delta_lplus1 = (layer_outputs[-1] - correct_outputs) * sigmoid_deriv(last_weighted_input)
@@ -100,8 +101,42 @@ class Network:
 
             delta_lp1 = delta_l
         return weight_grads, bias_grads
+
+    def back_propagate(self, inputs, correct_outputs, weights = None, biases = None):
+
+        # Array containing a_0, ..., a_{L-1}
+        layer_outputs = self.run(inputs, weights, biases, log = True)
+
+        # z_{L-1} = w_{L-1}*a_{L-2} + b_{L-1}
+        last_weighted_input = np.matmul(self.layers[-1].weight, layer_outputs[-2]) + self.layers[-1].bias
+
+        # delt_{L-1} = (a_{L-1} - y_{L-1}) * s'(z_{L-1})
+        delta_lplus1 = (layer_outputs[-1] - correct_outputs) * sigmoid_deriv(last_weighted_input)
+
+        # dC/dw_{L-1} = delt_{L-1} * a_{L-2}^T
+        weight_grads = [np.outer(delta_lplus1, layer_outputs[-2])]
+
+        # dC/db_{L-1} = delt_{L-1}
+        bias_grads = [delta_lplus1]
+
         
-    def gradient_descent(self, train_inputs, train_outputs, epochs, eta, test_inputs = None, test_outputs = None):
+        # l = L-2, ..., 1
+        for l in range(self.num_layers-2,0,-1):
+
+            # z_{L-2} = w_{L-2} * a_{L-3} + b_{L-2}
+            weighted_input = np.matmul(self.layers[l].weight, layer_outputs[l-1]) + self.layers[l].bias
+
+            # delt_{L-2} = w_{L-1}^T * delt_{L-1} * s'(z_{L-2})
+            delta_l = np.matmul(np.transpose(self.layers[l+1].weight), delta_lplus1) * sigmoid_deriv(weighted_input)
+
+            # dC/dw_{L-2}
+            weight_grads.insert(0, np.outer(delta_l, layer_outputs[l-1]))
+            bias_grads.insert(0, delta_l)
+
+            delta_lp1 = delta_l
+        return weight_grads, bias_grads
+        
+    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 100):
         '''
         Performs gradient descent on the given data
         training_data - Array of 2-tuples of the form (input, output)
@@ -110,20 +145,31 @@ class Network:
         test_data - Evaluates network after each epoch, printing progress
         '''
         for j in range(epochs):
+            if j % 50 == 0:
+                print("{0} epochs completed".format(j))
+            
             weight_grads = [np.zeros(np.shape(l.weight)) for l in self.layers[1:]]
             bias_grads = [np.zeros(np.shape(l.bias)) for l in self.layers[1:]]
-            for sample_index in range(np.shape(train_inputs)[1]):
-                sample_in = train_inputs[:,sample_index]
-                sample_out = train_outputs[:,sample_index]
+            
+            # Take only a subset
+            indices = random.sample(range(np.shape(train_inputs)[1]), batch_size)
+            batch_inputs = train_inputs[:,indices]
+            batch_outputs = train_outputs[:,indices]
+            
 
-                sample_weight_grad, sample_bias_grad = self.backpropagate(sample_in, sample_out)
+            for sample_index in range(batch_size):
+                sample_in = batch_inputs[:,sample_index]
+                sample_out = batch_outputs[:,sample_index]
+                
+                sample_weight_grad, sample_bias_grad = self.back_propagate(sample_in, sample_out)
                 weight_grads = [weight_grads[l] + sample_weight_grad[l] for l in range(len(weight_grads))]
                 bias_grads = [bias_grads[l] + sample_bias_grad[l] for l in range(len(bias_grads))]
             
             for i, layer in enumerate(self.layers[1:]):
-                layer.weight = layer.weight - eta*weight_grads[i]
-                layer.bias = layer.bias - eta*bias_grads[i]
-            if len(test_inputs) > 0:
+                layer.weight = layer.weight - eta*weight_grads[i]/batch_size
+                layer.bias = layer.bias - eta*bias_grads[i]/batch_size
+            
+            if len(test_inputs) > 0 and j % tick == 0:
                 print("Generation {0}: {1}".format(j, self.cost(test_inputs, test_outputs)))
 
     def cost(self, inputs, correct_outputs, weights = None, biases = None):
@@ -164,9 +210,8 @@ class Layer:
 
 class InputLayer(Layer):
     ''' Subclass of Layer whos evaluation is just the identity mapping '''
-    def __init__(self, bias):
-        self.length = len(bias)
-        self.bias = bias
+    def __init__(self, length):
+        self.length = length
         self.__name__ = "InputLayer"
 
     def evaluate(self, inputs):
