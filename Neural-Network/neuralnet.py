@@ -125,15 +125,17 @@ class Network:
 
             # z_{L-2} = w_{L-2} * a_{L-3} + b_{L-2}
             weighted_input = np.matmul(self.layers[l].weight, layer_outputs[l-1]) + self.layers[l].bias
-
             # delt_{L-2} = w_{L-1}^T * delt_{L-1} * s'(z_{L-2})
-            delta_l = np.matmul(np.transpose(self.layers[l+1].weight), delta_lplus1) * sigmoid_deriv(weighted_input)
+            delta_l = np.matmul(np.transpose(self.layers[l+1].weight), delta_lplus1) 
+            
+            # Element-wise multiplication by s'(z_{L-2})
+            delta_l *= sigmoid_deriv(weighted_input)
 
             # dC/dw_{L-2}
             weight_grads.insert(0, np.outer(delta_l, layer_outputs[l-1]))
             bias_grads.insert(0, delta_l)
 
-            delta_lp1 = delta_l
+            delta_lplus1 = delta_l
         return weight_grads, bias_grads
         
     def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 100):
