@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import open_data
 import random
 
@@ -128,7 +129,7 @@ class Network:
         
         return weight_grads, bias_grads
         
-    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 100):
+    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 100, plot=False):
         '''
         Performs gradient descent on the given data
         training_data - Array of 2-tuples of the form (input, output)
@@ -136,6 +137,7 @@ class Network:
         eta - Learning rate
         test_data - Evaluates network after each epoch, printing progress
         '''
+        cost_points = []
         for j in range(epochs):
             if j % 50 == 0:
                 print("{0} epochs completed".format(j))
@@ -155,7 +157,20 @@ class Network:
                 layer.bias = layer.bias - eta*bias_grads[i] / batch_size
             
             if len(test_inputs) > 0 and j % tick == 0:
-                print("Generation {0}: {1}".format(j, self.cost(test_inputs, test_outputs)))
+                cost = self.cost(test_inputs, test_outputs) 
+                cost_points.append( (j, cost)) 
+                print("Generation {0}: {1}".format(j, cost))
+
+        if plot:
+            print("plotting")
+            x,y = zip(*cost_points)
+            fig = plt.plot(x,y)
+            plt.title("Layers: {0}, Training Size: {1}, Epochs: {2}, Learning Rate: {3}".format(self.layer_sizes, len(train_inputs), epochs, eta))
+            plt.ylabel("Quadratic Cost")
+            plt.xlabel("Epoch")
+            plt.ylim([0,max([c for (_,c) in cost_points])])
+            plt.xlim([0,epochs])
+            plt.show()
 
     def cost(self, inputs, correct_outputs, weights = None, biases = None):
         '''
