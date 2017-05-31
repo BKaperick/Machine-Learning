@@ -15,13 +15,17 @@ def cost(output_emp, output_act):
     ''' Mean squared error between empirical and actual outputs '''
     n = output_emp.shape[1]
     cost_val = 0
+    correct_count = 0
     
     for i in range(n):
-        cost_val += np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
+        if np.argmax(abs(output_emp[:,i])) == np.argmax(output_act[:,i]):
+            correct_count += 1
+        term = np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
+        cost_val += term
 
     # Standard normalization factor
     cost_val *= (.5/n)
-    return cost_val
+    return cost_val, correct_count
 
 def cost_gradient(output_emp, output_act):
     ''' Gradient for Quadratic cost function defined in cost() '''
@@ -135,7 +139,7 @@ class Network:
         
         return weight_grads, bias_grads
         
-    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 100, plot=False):
+    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 10, plot=False):
         '''
         Performs gradient descent on the given data
         training_data - Array of 2-tuples of the form (input, output)
@@ -145,7 +149,7 @@ class Network:
         '''
         cost_points = []
         for j in range(epochs):
-            if j % 50 == 0:
+            if j % tick == 0:
                 print("{0} epochs completed".format(j))
             
             weight_grads = [np.zeros(weight.shape) for weight in self.weights]
@@ -163,9 +167,9 @@ class Network:
                 self.biases[i] = self.biases[i] - eta*bias_grads[i] / batch_size
             
             if len(test_inputs) > 0 and j % tick == 0:
-                cost = self.cost(test_inputs, test_outputs) 
+                cost, count = self.cost(test_inputs, test_outputs) 
                 cost_points.append( (j, cost)) 
-                print("Generation {0}: {1}".format(j, cost))
+                print("Generation {0}: {1} ({2} / {3})".format(j, cost, count, test_inputs.shape[1]))
 
         if plot:
             print("plotting")
@@ -184,7 +188,7 @@ class Network:
         compute MSE of the difference in the actual
         and expected outputs -
         inputs - each column is a new input sample
-
+        returns MSE cost and the number of correct classifications
         '''
         
         # Feed forward with inputs, weights and biases
