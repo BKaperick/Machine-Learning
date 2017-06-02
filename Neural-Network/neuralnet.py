@@ -11,7 +11,7 @@ def sigmoid_deriv(z):
     ''' Recursive formulation of Sigmoid function derivative '''
     return np.exp(-z) * (sigmoid(z)**2)
 
-def cost(output_emp, output_act):
+def MSE_cost(output_emp, output_act):
     ''' Mean squared error between empirical and actual outputs '''
     n = output_emp.shape[1]
     cost_val = 0
@@ -22,12 +22,12 @@ def cost(output_emp, output_act):
             correct_count += 1
         term = np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
         cost_val += term
-
+        print(np.stack((output_emp[:,i], output_act[:,i])))
     # Standard normalization factor
     cost_val *= (.5/n)
     return cost_val, correct_count
 
-def cost_gradient(output_emp, output_act):
+def MSE_cost_gradient(output_emp, output_act):
     ''' Gradient for Quadratic cost function defined in cost() '''
     return output_emp - output_act
 
@@ -37,7 +37,7 @@ class Network:
     Feed-Forward Network -
     Stores layers of neurons and their connections
     '''
-    def __init__(self, layers, weights, biases):
+    def __init__(self, layers):
         '''
         Initialize the network-
         layers - array of layer sizes, 
@@ -45,18 +45,22 @@ class Network:
         '''
         
         assert(len(layers) > 1)
-        assert(len(layers)-1 == len(weights) == len(biases))
         self.layers = layers
-        self.weights = weights
-        self.biases = biases
         self.num_layers = len(layers)
         self.input_dim = layers[0]
         self.output_dim = layers[-1]
-        #self.init_layers(weights, biases)
-        print([x.shape for x in biases])
-        print(layers)
-        assert(all([biases[i].shape[0] == self.layers[i+1] for i in range(self.num_layers - 1)]))
-        assert(all([weights[i].shape == (self.layers[i+1],self.layers[i]) for i in range(0,self.num_layers-1)]))
+        
+        # Initialize weights and biases randomly
+        self.weights = []
+        for i,size in enumerate(layers[:-1]):
+            next_size = layers[i+1]
+            self.weights.append(np.random.rand(next_size, size))
+        self.biases = []
+        for i,size in enumerate(layers[1:]):
+            self.biases.append(np.random.randn(size))
+        
+        assert(all([self.biases[i].shape[0] == self.layers[i+1] for i in range(self.num_layers - 1)]))
+        assert(all([self.weights[i].shape == (self.layers[i+1],self.layers[i]) for i in range(0,self.num_layers-1)]))
     
     def update_layers(self, weights, bias):
         ''' Update weights and biases in the neuron layers '''
@@ -97,6 +101,7 @@ class Network:
 
         # Array containing a_0, ..., a_{L-1}
         layer_outputs = self.run(inputs, weights, biases, log = True)
+
         assert(len(layer_outputs) == self.num_layers)
         assert(all([layer_outputs[i].shape[0] == self.layers[i] for i in range(self.num_layers)]))
 
@@ -149,7 +154,7 @@ class Network:
         '''
         cost_points = []
         for j in range(epochs):
-            if j % tick == 0:
+            if j % tick == 0 and not plot:
                 print("{0} epochs completed".format(j))
             
             weight_grads = [np.zeros(weight.shape) for weight in self.weights]
@@ -195,10 +200,10 @@ class Network:
         outputs = self.run(inputs, weights, biases)
         
         # Return MSE of outputs
-        return cost(outputs, correct_outputs)
+        return MSE_cost(outputs, correct_outputs)
         
     def cost_gradient(self, output_emp, output_act):
-        return cost_gradient(output_emp, output_act)
+        return MSE_cost_gradient(output_emp, output_act)
     
     def eval_layer(self, l, inputs):
         # Note adding a 1D ndarray to a 2D ndarray results in adding the i^th component

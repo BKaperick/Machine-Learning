@@ -7,29 +7,27 @@ layer_map = [784,15,5,5,25,5,10]
 
 
 # Load data
-num_samples = 60000
-training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=False)
+num_samples = 5000
+split_at = 4990
+test_data = False
+training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=True)
 
-test_labels = training_labels[50000:]
-test_images = training_images[:,50000:]
-training_labels = training_labels[:50000]
-training_images = training_images[:,:50000]
+np.random.shuffle(training_labels.T)
+np.random.shuffle(training_images.T)
+if test_data:
+    np.random.shuffle(test_labels.T)
+    np.random.shuffle(test_images.T)
+
+test_labels = training_labels[split_at:]
+test_images = training_images[:,split_at:]
+training_labels = training_labels[:split_at]
+training_images = training_images[:,:split_at]
 
 print(test_labels.shape, test_images.shape, training_labels.shape, training_images.shape)
 
-# Initialize weights randomly
-weights = []
-for i,size in enumerate(layer_map[:-1]):
-    next_size = layer_map[i+1]
-    weights.append(np.random.rand(next_size, size))
-
-biases = []
-for i,size in enumerate(layer_map[1:]):
-    
-    biases.append(np.random.randn(size))
 
 # Initialize network
-network = Network(layer_map, weights, biases)
+network = Network(layer_map)
 
 def label_to_flag_vec(labels):
     # Reshape output scalars to the decimal encoding
@@ -46,7 +44,7 @@ eta = 1
 batch_size = 15
 
 # Train network weights and labels on training data
-network.stochastic_gradient_descent(training_images, training_label_vecs, batch_size, epochs, eta, test_images, test_label_vecs, tick=1, plot=True)
+network.stochastic_gradient_descent(training_images, training_label_vecs, batch_size, epochs, eta, test_images, test_label_vecs, tick=1000, plot=True)
 print(network.cost(test_images, test_label_vecs))
 
 ## Test that everything appears to be working
