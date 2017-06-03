@@ -20,7 +20,7 @@ def MSE_cost(output_emp, output_act):
     correct_count = 0
     
     for i in range(n):
-        if np.argmax(abs(output_emp[:,i])) == np.argmax(output_act[:,i]):
+        if np.argmax(output_emp[:,i]) == np.argmax(output_act[:,i]):
             correct_count += 1
         term = np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
         cost_val += term
@@ -159,19 +159,17 @@ class Network:
             if j % tick == 0 and not plot:
                 print("{0} epochs completed".format(j))
             
-            weight_grads = [np.zeros(weight.shape) for weight in self.weights]
-            bias_grads = [np.zeros(bias.shape) for bias in self.biases]
-            
             # Take only a subset
             indices = random.sample(range(train_inputs.shape[1]), batch_size)
             batch_inputs = train_inputs[:,indices]
             batch_outputs = train_outputs[:,indices]
             
             weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
+            scaling = eta / batch_size
 
             for i,layer in enumerate(self.layers[1:]):
-                self.weights[i] = self.weights[i] - eta* weight_grads[i] / batch_size
-                self.biases[i] = self.biases[i] - eta*bias_grads[i] / batch_size
+                self.weights[i] = self.weights[i] - scaling * weight_grads[i]
+                self.biases[i] = self.biases[i] - scaling * bias_grads[i]
             
             if len(test_inputs) > 0 and j % tick == 0:
                 cost, count = self.cost(test_inputs, test_outputs) 

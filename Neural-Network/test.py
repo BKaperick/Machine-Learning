@@ -33,7 +33,7 @@ def label_to_flag_vec(labels):
     # Reshape output scalars to the decimal encoding
     label_vecs = np.zeros((10,len(labels)))
     for i,val in enumerate(labels):
-        label_vecs[int(val),i] = 1
+        label_vecs[int(val),i] = 1.0
     return label_vecs
 
 training_label_vecs = label_to_flag_vec(training_labels)
