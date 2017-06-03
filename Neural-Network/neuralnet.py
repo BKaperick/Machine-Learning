@@ -1,15 +1,17 @@
 import numpy as np
+np.set_printoptions(linewidth=160)
 import matplotlib.pyplot as plt
 import open_data
 import random
 
 def sigmoid(z):
     ''' Just a logistic function component-wise on z '''
-    return 1 / (1 + np.exp(-z));
+    return 1.0 / (1.0 + np.exp(-z));
 
 def sigmoid_deriv(z):
     ''' Recursive formulation of Sigmoid function derivative '''
-    return np.exp(-z) * (sigmoid(z)**2)
+    #return np.exp(-z) * (sigmoid(z)**2)
+    return sigmoid(z) * (1-sigmoid(z))
 
 def MSE_cost(output_emp, output_act):
     ''' Mean squared error between empirical and actual outputs '''
@@ -22,7 +24,7 @@ def MSE_cost(output_emp, output_act):
             correct_count += 1
         term = np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
         cost_val += term
-        print(np.stack((output_emp[:,i], output_act[:,i])))
+        #print(np.stack((output_emp[:,i], output_act[:,i])))
     # Standard normalization factor
     cost_val *= (.5/n)
     return cost_val, correct_count
