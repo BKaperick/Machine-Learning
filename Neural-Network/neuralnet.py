@@ -1,8 +1,10 @@
 import numpy as np
-np.set_printoptions(linewidth=160)
 import matplotlib.pyplot as plt
 import open_data
 import random
+
+# The printing width of numpy arrays so that inputs disply as 28x28 2d arrays
+np.set_printoptions(linewidth=170)
 
 def sigmoid(z):
     ''' Just a logistic function component-wise on z '''
@@ -56,10 +58,12 @@ class Network:
         self.weights = []
         for i,size in enumerate(layers[:-1]):
             next_size = layers[i+1]
-            self.weights.append(np.random.rand(next_size, size))
+            #self.weights.append(np.random.rand(next_size, size))
+            self.weights.append(.01 * np.ones((next_size, size)))
         self.biases = []
         for i,size in enumerate(layers[1:]):
-            self.biases.append(np.random.randn(size))
+            #self.biases.append(np.random.randn(size))
+            self.biases.append(.01*np.ones(size))
         
         assert(all([self.biases[i].shape[0] == self.layers[i+1] for i in range(self.num_layers - 1)]))
         assert(all([self.weights[i].shape == (self.layers[i+1],self.layers[i]) for i in range(0,self.num_layers-1)]))
@@ -103,6 +107,14 @@ class Network:
 
         # Array containing a_0, ..., a_{L-1}
         layer_outputs = self.run(inputs, weights, biases, log = True)
+        
+        print("\n")
+        a = layer_outputs[-1]
+        for i in range(a.shape[1]):
+            print("input {0}: \n{1}".format(i, inputs[:,i]))
+            print("output {0}: \n{1}".format(i, a[:,i]))
+        print("\n")
+            
 
         assert(len(layer_outputs) == self.num_layers)
         assert(all([layer_outputs[i].shape[0] == self.layers[i] for i in range(self.num_layers)]))
@@ -131,7 +143,7 @@ class Network:
 
             # delt_{L-2} = w_{L-1}^T * delt_{L-1} * s'(z_{L-2})
             # delt_1 = w_2^T * delt_2 * s'(z_0)
-            delta_l = np.matmul(np.transpose(self.weights[l]), delta_lplus1) 
+            delta_l = np.matmul(self.weights[l].T, delta_lplus1) 
             
             # Element-wise multiplication by s'(z_{L-2})
             delta_l *= sigmoid_deriv(weighted_input)
@@ -168,16 +180,25 @@ class Network:
             batch_outputs = train_outputs[:,indices]
             
             weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
+<<<<<<< Updated upstream
 
             for i,layer in enumerate(self.layers[1:]):
                 self.weights[i] = self.weights[i] - eta* weight_grads[i] / batch_size
                 self.biases[i] = self.biases[i] - eta*bias_grads[i] / batch_size
+=======
+            #print(weight_grads[1], '\n\n', bias_grads[1]), input()
+            scaling = eta / batch_size
+
+            for i,layer in enumerate(self.layers[1:]):
+                self.weights[i] = self.weights[i] - scaling * weight_grads[i]
+                self.biases[i]  = self.biases[i]  - scaling * bias_grads[i]
+>>>>>>> Stashed changes
             
             if len(test_inputs) > 0 and j % tick == 0:
                 cost, count = self.cost(test_inputs, test_outputs) 
                 cost_points.append( (j, cost)) 
                 print("Generation {0}: {1} ({2} / {3})".format(j, cost, count, test_inputs.shape[1]))
-
+        
         if plot:
             print("plotting")
             x,y = zip(*cost_points)
