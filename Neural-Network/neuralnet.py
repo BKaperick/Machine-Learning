@@ -8,6 +8,7 @@ np.set_printoptions(linewidth=170)
 
 def sigmoid(z):
     ''' Just a logistic function component-wise on z '''
+    print("\n\nEXPONENTIAL: \n{0}\n\n".format(np.exp(-z)))
     return 1.0 / (1.0 + np.exp(-z));
 
 def sigmoid_deriv(z):
@@ -59,11 +60,11 @@ class Network:
         for i,size in enumerate(layers[:-1]):
             next_size = layers[i+1]
             #self.weights.append(np.random.rand(next_size, size))
-            self.weights.append(.01 * np.ones((next_size, size)))
+            self.weights.append(.00001 * np.ones((next_size, size)))
         self.biases = []
         for i,size in enumerate(layers[1:]):
             #self.biases.append(np.random.randn(size))
-            self.biases.append(.01*np.ones(size))
+            self.biases.append(.00001*np.ones(size))
         
         assert(all([self.biases[i].shape[0] == self.layers[i+1] for i in range(self.num_layers - 1)]))
         assert(all([self.weights[i].shape == (self.layers[i+1],self.layers[i]) for i in range(0,self.num_layers-1)]))
@@ -226,4 +227,10 @@ class Network:
         # to the i^th column of the 2D ndarray
         #if l == 0:
         #    return inputs
-        return sigmoid(np.matmul(self.weights[l], inputs) + self.biases[l][:,np.newaxis])
+        z = np.matmul(self.weights[l], inputs) + self.biases[l][:,np.newaxis]
+        #print("l = {0}\nweights = \n{1}\ninputs (nonzero = {4}) = \n{2}\nbiases = \n{3}\n\n".format(l, self.weights[l], inputs, self.biases[l], inputs.any()))
+        print("l = {0}\ninputs (nonzero = {1}) = \n{2}\nW*I = {3}\nz = {4}\n\n".format(l, inputs.any(), inputs, np.matmul(self.weights[l], inputs), z))
+        if l == 0:
+            print("first mult: \n", self.weights[l][1,:], inputs[:,1])
+        return sigmoid(z)
+        #return sigmoid(np.matmul(self.weights[l], inputs) + self.biases[l][:,np.newaxis])

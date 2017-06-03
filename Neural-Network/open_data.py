@@ -38,7 +38,7 @@ def _get_images(image_file_name, max_num):
         num_pixels = num_cols * num_rows
 
         # Should be the most efficient initialization
-        images = np.empty((num_pixels, num_images))
+        images = np.empty((num_pixels, num_images), dtype=float)
         image = np.empty(num_pixels)
         
         for k in range(num_images):
