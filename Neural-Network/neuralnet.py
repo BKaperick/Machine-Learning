@@ -180,19 +180,12 @@ class Network:
             batch_outputs = train_outputs[:,indices]
             
             weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
-<<<<<<< Updated upstream
-
-            for i,layer in enumerate(self.layers[1:]):
-                self.weights[i] = self.weights[i] - eta* weight_grads[i] / batch_size
-                self.biases[i] = self.biases[i] - eta*bias_grads[i] / batch_size
-=======
             #print(weight_grads[1], '\n\n', bias_grads[1]), input()
             scaling = eta / batch_size
 
             for i,layer in enumerate(self.layers[1:]):
                 self.weights[i] = self.weights[i] - scaling * weight_grads[i]
                 self.biases[i]  = self.biases[i]  - scaling * bias_grads[i]
->>>>>>> Stashed changes
             
             if len(test_inputs) > 0 and j % tick == 0:
                 cost, count = self.cost(test_inputs, test_outputs) 
