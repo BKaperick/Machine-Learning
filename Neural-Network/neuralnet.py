@@ -8,7 +8,7 @@ np.set_printoptions(linewidth=170)
 
 def sigmoid(z):
     ''' Just a logistic function component-wise on z '''
-    print("\n\nEXPONENTIAL: \n{0}\n\n".format(np.exp(-z)))
+    #print("\n\nEXPONENTIAL: \n{0}\n\n".format(np.exp(-z)))
     return 1.0 / (1.0 + np.exp(-z));
 
 def sigmoid_deriv(z):
@@ -104,6 +104,7 @@ class Network:
 
         return inputs
     
+    
     def back_propagate(self, inputs, correct_outputs, weights = None, biases = None):
 
         # Array containing a_0, ..., a_{L-1}
@@ -181,7 +182,7 @@ class Network:
             batch_outputs = train_outputs[:,indices]
             
             weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
-            #print(weight_grads[1], '\n\n', bias_grads[1]), input()
+            print(weight_grads[1], '\n\n', bias_grads[1]), input()
             scaling = eta / batch_size
 
             for i,layer in enumerate(self.layers[1:]):
@@ -229,8 +230,8 @@ class Network:
         #    return inputs
         z = np.matmul(self.weights[l], inputs) + self.biases[l][:,np.newaxis]
         #print("l = {0}\nweights = \n{1}\ninputs (nonzero = {4}) = \n{2}\nbiases = \n{3}\n\n".format(l, self.weights[l], inputs, self.biases[l], inputs.any()))
-        print("l = {0}\ninputs (nonzero = {1}) = \n{2}\nW*I = {3}\nz = {4}\n\n".format(l, inputs.any(), inputs, np.matmul(self.weights[l], inputs), z))
-        if l == 0:
-            print("first mult: \n", self.weights[l][1,:], inputs[:,1])
+        #print("l = {0}\ninputs (nonzero = {1}) = \n{2}\nW*I = {3}\nz = {4}\n\n".format(l, inputs.any(), inputs, np.matmul(self.weights[l], inputs), z))
+        #if l == 0:
+        #    print("first mult: \n", self.weights[l][1,:], inputs[:,1])
         return sigmoid(z)
         #return sigmoid(np.matmul(self.weights[l], inputs) + self.biases[l][:,np.newaxis])
