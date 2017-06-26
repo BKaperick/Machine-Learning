@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import open_data
 import random
+from pprint import pprint
 
 # The printing width of numpy arrays so that inputs disply as 28x28 2d arrays
 np.set_printoptions(linewidth=170)
@@ -9,12 +10,13 @@ np.set_printoptions(linewidth=170)
 def sigmoid(z):
     ''' Just a logistic function component-wise on z '''
     #print("\n\nEXPONENTIAL: \n{0}\n\n".format(np.exp(-z)))
-    return 1.0 / (1.0 + np.exp(-z));
+    return z
 
 def sigmoid_deriv(z):
     ''' Recursive formulation of Sigmoid function derivative '''
     #return np.exp(-z) * (sigmoid(z)**2)
-    return sigmoid(z) * (1-sigmoid(z))
+    #return sigmoid(z) * (1-sigmoid(z))
+    return np.ones(z.shape)
 
 def MSE_cost(output_emp, output_act):
     ''' Mean squared error between empirical and actual outputs '''
@@ -42,7 +44,7 @@ class Network:
     Feed-Forward Network -
     Stores layers of neurons and their connections
     '''
-    def __init__(self, layers):
+    def __init__(self, layers, weights = None, biases = None):
         '''
         Initialize the network-
         layers - array of layer sizes, 
@@ -56,15 +58,21 @@ class Network:
         self.output_dim = layers[-1]
         
         # Initialize weights and biases randomly
-        self.weights = []
-        for i,size in enumerate(layers[:-1]):
-            next_size = layers[i+1]
-            #self.weights.append(np.random.rand(next_size, size))
-            self.weights.append(.00001 * np.ones((next_size, size)))
-        self.biases = []
-        for i,size in enumerate(layers[1:]):
-            #self.biases.append(np.random.randn(size))
-            self.biases.append(.00001*np.ones(size))
+        if weights:
+            self.weights = weights
+        else:
+            self.weights = []
+            for i,size in enumerate(layers[:-1]):
+                next_size = layers[i+1]
+                #self.weights.append(np.random.rand(next_size, size))
+                self.weights.append(.00001 * np.ones((next_size, size)))
+        if biases:
+            self.biases = biases
+        else:
+            self.biases = []
+            for i,size in enumerate(layers[1:]):
+                #self.biases.append(np.random.randn(size))
+                self.biases.append(.00001*np.ones(size))
         
         assert(all([self.biases[i].shape[0] == self.layers[i+1] for i in range(self.num_layers - 1)]))
         assert(all([self.weights[i].shape == (self.layers[i+1],self.layers[i]) for i in range(0,self.num_layers-1)]))
@@ -94,14 +102,13 @@ class Network:
             inputs = [inputs]
        
         for i in range(self.num_layers - 1):
+            
             # Inputs for the next layer are precisely the 
             # outputs of this layer
             if log:
-                #if i > 0:
                 inputs.append(self.eval_layer(i, inputs[-1]))
             else:
                 inputs = self.eval_layer(i, inputs)
-
         return inputs
     
     
@@ -109,27 +116,26 @@ class Network:
 
         # Array containing a_0, ..., a_{L-1}
         layer_outputs = self.run(inputs, weights, biases, log = True)
-        
-        print("\n")
+        print("Outputs: \n", layer_outputs)
         a = layer_outputs[-1]
-        for i in range(a.shape[1]):
-            print("input {0}: \n{1}".format(i, inputs[:,i]))
-            print("output {0}: \n{1}".format(i, a[:,i]))
-        print("\n")
-            
 
         assert(len(layer_outputs) == self.num_layers)
         assert(all([layer_outputs[i].shape[0] == self.layers[i] for i in range(self.num_layers)]))
 
         # z_{L-1} = w_{L-1}*a_{L-2} + b_{L-1}
         last_weighted_input = np.matmul(self.weights[-1], layer_outputs[-2]) + self.biases[-1][:,np.newaxis]
+        assert(np.allclose(last_weighted_input, np.asarray([[4,8,12,16,20],[4,8,12,16,20]])))
         zs = [last_weighted_input.shape]
 
         # delt_{L-1} = (a_{L-1} - y_{L-1}) * s'(z_{L-1})
+        print("\n\nCORRECT BEING USED:\n{0}\n\nACTUALLY CORRECT:\n{1}".format(correct_outputs[-1], correct_outputs))
         delta_lplus1 = self.cost_gradient(layer_outputs[-1], correct_outputs[-1]) * sigmoid_deriv(last_weighted_input)
+        print(delta_lplus1)
+        assert(np.allclose(delta_lplus1, np.asarray([[11],[12]])))
 
         # dC/dw_{L-1} = delt_{L-1} * a_{L-2}^T
         weight_grads = [np.matmul(delta_lplus1, layer_outputs[-2].T)]
+
 
         # dC/db_{L-1} = delt_{L-1}
         bias_grads = [np.sum(delta_lplus1,1)]
@@ -146,6 +152,7 @@ class Network:
             # delt_{L-2} = w_{L-1}^T * delt_{L-1} * s'(z_{L-2})
             # delt_1 = w_2^T * delt_2 * s'(z_0)
             delta_l = np.matmul(self.weights[l].T, delta_lplus1) 
+            print("delta_{0} = {1}".format(l+2, delta_l))
             
             # Element-wise multiplication by s'(z_{L-2})
             delta_l *= sigmoid_deriv(weighted_input)
@@ -160,7 +167,7 @@ class Network:
         
         return weight_grads, bias_grads
         
-    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 10, plot=False):
+    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 1, plot=False):
         '''
         Performs gradient descent on the given data
         training_data - Array of 2-tuples of the form (input, output)
@@ -177,12 +184,12 @@ class Network:
             bias_grads = [np.zeros(bias.shape) for bias in self.biases]
             
             # Take only a subset
-            indices = random.sample(range(train_inputs.shape[1]), batch_size)
+            indices = np.asarray([0,1,2,3,4])#random.sample(range(train_inputs.shape[1]), batch_size)
             batch_inputs = train_inputs[:,indices]
             batch_outputs = train_outputs[:,indices]
             
             weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
-            print(weight_grads[1], '\n\n', bias_grads[1]), input()
+            #print(weight_grads[1], '\n\n', bias_grads[1]), input()
             scaling = eta / batch_size
 
             for i,layer in enumerate(self.layers[1:]):
@@ -228,6 +235,7 @@ class Network:
         # to the i^th column of the 2D ndarray
         #if l == 0:
         #    return inputs
+        #print("l = {0},\nw = {1},\nin = {2},\nb = {3}".format(l, self.weights[l], inputs, self.biases[l]))
         z = np.matmul(self.weights[l], inputs) + self.biases[l][:,np.newaxis]
         #print("l = {0}\nweights = \n{1}\ninputs (nonzero = {4}) = \n{2}\nbiases = \n{3}\n\n".format(l, self.weights[l], inputs, self.biases[l], inputs.any()))
         #print("l = {0}\ninputs (nonzero = {1}) = \n{2}\nW*I = {3}\nz = {4}\n\n".format(l, inputs.any(), inputs, np.matmul(self.weights[l], inputs), z))
