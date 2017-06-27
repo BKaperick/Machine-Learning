@@ -24,13 +24,13 @@ def MSE_cost(output_emp, output_act):
             correct_count += 1
         term = np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
         cost_val += term
-        #print(np.stack((output_emp[:,i], output_act[:,i])))
     # Standard normalization factor
     cost_val *= (.5/n)
     return cost_val, correct_count
 
 def MSE_cost_gradient(output_emp, output_act):
     ''' Gradient for Quadratic cost function defined in cost() '''
+    #print("\n\n",output_emp, output_act, output_emp - output_act,"\n\n")
     return output_emp - output_act
 
     
@@ -103,6 +103,7 @@ class Network:
 
         # Array containing a_0, ..., a_{L-1}
         layer_outputs = self.run(inputs, weights, biases, log = True)
+        print(layer_outputs[-1], "\n\n")
 
         assert(len(layer_outputs) == self.num_layers)
         assert(all([layer_outputs[i].shape[0] == self.layers[i] for i in range(self.num_layers)]))
@@ -112,7 +113,7 @@ class Network:
         zs = [last_weighted_input.shape]
 
         # delt_{L-1} = (a_{L-1} - y_{L-1}) * s'(z_{L-1})
-        delta_lplus1 = self.cost_gradient(layer_outputs[-1], correct_outputs[-1]) * sigmoid_deriv(last_weighted_input)
+        delta_lplus1 = self.cost_gradient(layer_outputs[-1], correct_outputs) * sigmoid_deriv(last_weighted_input)
 
         # dC/dw_{L-1} = delt_{L-1} * a_{L-2}^T
         weight_grads = [np.matmul(delta_lplus1, layer_outputs[-2].T)]
@@ -125,7 +126,6 @@ class Network:
 
             # z_{L-2} = w_{L-2} * a_{L-3} + b_{L-2}
             # w[self.num_layers-2], layer_outputs[self.num_layers-2] + 
-            #print(len(self.weights), len(layer_outputs), len(self.biases[5]))
             weighted_input = np.matmul(self.weights[l-1], layer_outputs[l-1]) + self.biases[l-1][:,np.newaxis]
             zs.insert(0,weighted_input.shape)
 
@@ -168,8 +168,8 @@ class Network:
             scaling = eta / batch_size
 
             for i,layer in enumerate(self.layers[1:]):
-                self.weights[i] = self.weights[i] - scaling * weight_grads[i]
-                self.biases[i] = self.biases[i] - scaling * bias_grads[i]
+                self.weights[i] -= scaling * weight_grads[i]
+                self.biases[i]  -= scaling * bias_grads[i]
             
             if len(test_inputs) > 0 and j % tick == 0:
                 cost, count = self.cost(test_inputs, test_outputs) 
