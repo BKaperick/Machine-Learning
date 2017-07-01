@@ -59,7 +59,7 @@ class Network:
         self.weights = []
         for i,size in enumerate(layers[:-1]):
             next_size = layers[i+1]
-            self.weights.append(np.random.rand(next_size, size))
+            self.weights.append(np.random.randn(next_size, size))
         self.biases = []
         for i,size in enumerate(layers[1:]):
             self.biases.append(np.random.randn(size))

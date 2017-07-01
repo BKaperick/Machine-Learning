@@ -10,21 +10,18 @@ layer_map = [784,30,10]
 num_samples = 60000
 split_at = 50000
 test_data = False
-training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=True)
+training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=test_data)
 
-np.random.shuffle(training_labels.T)
-np.random.shuffle(training_images.T)
-if test_data:
-    np.random.shuffle(test_labels.T)
-    np.random.shuffle(test_images.T)
+#np.random.shuffle(training_labels.T)
+#np.random.shuffle(training_images.T)
+#if test_data:
+#    np.random.shuffle(test_labels.T)
+#    np.random.shuffle(test_images.T)
 
 test_labels = training_labels[split_at:]
-test_images = training_images[:,split_at:]
+test_images = training_images[:,split_at:] / 255
 training_labels = training_labels[:split_at]
-training_images = training_images[:,:split_at]
-
-print(test_labels.shape, test_images.shape, training_labels.shape, training_images.shape)
-
+training_images = training_images[:,:split_at] / 255
 
 # Initialize network
 network = Network(layer_map)
