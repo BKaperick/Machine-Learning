@@ -5,13 +5,19 @@ import open_data
 import random
 
 def sigmoid(z):
-    ''' Just a logistic function component-wise on z '''
+    ''' 
+    Just a logistic function component-wise on z 
+    Note: function underflows at z > 745
+    '''
+
     return 1.0 / (1.0 + np.exp(-z));
 
 def sigmoid_deriv(z):
     ''' Recursive formulation of Sigmoid function derivative '''
+    #print("\t", np.linalg.norm(z))
     #return np.exp(-z) * (sigmoid(z)**2)
-    return sigmoid(z) * (1-sigmoid(z))
+    sigz = sigmoid(z)
+    return sigz * (1-sigz)
 
 def MSE_cost(output_emp, output_act):
     ''' Mean squared error between empirical and actual outputs '''
@@ -103,7 +109,8 @@ class Network:
 
         # Array containing a_0, ..., a_{L-1}
         layer_outputs = self.run(inputs, weights, biases, log = True)
-        print(layer_outputs[-1], "\n\n")
+        #print(self.weights[-1], "\n\n")
+        #print(layer_outputs[-1], "\n\n")
 
         assert(len(layer_outputs) == self.num_layers)
         assert(all([layer_outputs[i].shape[0] == self.layers[i] for i in range(self.num_layers)]))
@@ -134,9 +141,14 @@ class Network:
             delta_l = np.matmul(np.transpose(self.weights[l]), delta_lplus1) 
             
             # Element-wise multiplication by s'(z_{L-2})
+            if l == 1:
+                print(np.linalg.norm(delta_l), np.linalg.norm(weighted_input), sigmoid(weighted_input).shape, sigmoid(weighted_input)[0], np.linalg.norm(sigmoid_deriv(weighted_input)))
             delta_l *= sigmoid_deriv(weighted_input)
 
             # dC/dw_{L-2} = delta_{L-2} * (a_{L-3})^T
+            
+            if l == 1:
+                pass#print(delta_l)
             weight_grads.insert(0, np.matmul(delta_l, layer_outputs[l-1].T))
 
             # Sum together each sample's delta_l
@@ -166,7 +178,7 @@ class Network:
             
             weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
             scaling = eta / batch_size
-
+            #print([np.linalg.norm(w) for w in weight_grads])
             for i,layer in enumerate(self.layers[1:]):
                 self.weights[i] -= scaling * weight_grads[i]
                 self.biases[i]  -= scaling * bias_grads[i]
