@@ -36,6 +36,8 @@ def MSE_cost_gradient(output_emp, output_act):
     ''' Gradient for Quadratic cost function defined in cost() '''
     return output_emp - output_act
 
+
+
     
 class Network:
     ''' 
@@ -148,7 +150,7 @@ class Network:
         
         return weight_grads, bias_grads
         
-    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 10, plot=False):
+    def stochastic_gradient_descent(self, train_inputs, train_outputs, batch_size, epochs, eta, test_inputs = [], test_outputs = None, tick = 10, verbose=False):
         '''
         Performs gradient descent on the given data
         training_data - Array of 2-tuples of the form (input, output)
@@ -158,27 +160,30 @@ class Network:
         '''
         cost_points = []
         for j in range(epochs):
-            if j % tick == 0 and not plot:
+            if j % tick == 0 and verbose:
                 print("{0} epochs completed".format(j))
             
-            # Take only a subset
-            indices = random.sample(range(train_inputs.shape[1]), batch_size)
-            batch_inputs = train_inputs[:,indices]
-            batch_outputs = train_outputs[:,indices]
-            
-            weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
-            scaling = eta / batch_size
-            
-            for i,layer in enumerate(self.layers[1:]):
-                self.weights[i] -= scaling * weight_grads[i]
-                self.biases[i]  -= scaling * bias_grads[i]
+            # Random ordering if indices up to number of input samples
+            shuffled_indices = np.random.choice(train_inputs.shape[1], train_inputs.shape[1])
+            for m in range(int(train_inputs.shape[1] / batch_size)):
+                indices = shuffled_indices[m:m + batch_size]
+                batch_inputs = train_inputs[:,indices]
+                batch_outputs = train_outputs[:,indices]
+                
+                weight_grads, bias_grads = self.back_propagate(batch_inputs, batch_outputs)
+                scaling = eta / batch_size
+                
+                for i,layer in enumerate(self.layers[1:]):
+                    self.weights[i] -= scaling * weight_grads[i]
+                    self.biases[i]  -= scaling * bias_grads[i]
             
             if len(test_inputs) > 0 and j % tick == 0:
                 cost, count = self.cost(test_inputs, test_outputs) 
                 cost_points.append( (j, cost)) 
-                print("Generation {0}: {1} ({2} / {3})".format(j, cost, count, test_inputs.shape[1]))
+                if verbose:
+                    print("Generation {0}: {1} ({2} / {3})".format(j, cost, count, test_inputs.shape[1]))
 
-        if plot:
+        if verbose:
             print("plotting")
             x,y = zip(*cost_points)
             fig = plt.plot(x,y)
