@@ -19,9 +19,9 @@ training_labels, training_images, test_labels, test_images = open_data.get_data(
 #    np.random.shuffle(test_images.T)
 
 test_labels = training_labels[split_at:]
-test_images = training_images[:,split_at:] / 255
+test_images = (training_images[:,split_at:] / 255) - .5
 training_labels = training_labels[:split_at]
-training_images = training_images[:,:split_at] / 255
+training_images = (training_images[:,:split_at] / 255) - .5
 
 # Initialize network
 network = Network(layer_map)
@@ -37,7 +37,7 @@ training_label_vecs = label_to_flag_vec(training_labels)
 test_label_vecs = label_to_flag_vec(test_labels)
 
 epochs     = 10000
-eta        = 2.0
+eta        = 3.0
 batch_size = 10
 tick       = 50
 plotting = True
