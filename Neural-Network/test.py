@@ -43,7 +43,7 @@ epochs     = 30
 eta        = 3.0
 batch_size = 10
 tick       = 20
-plotting = True
+plotting = False
 
 # Train network weights and labels on training data
 network.stochastic_gradient_descent(training_images, training_label_vecs, batch_size, epochs, eta, test_images, test_label_vecs, tick=tick, plot=plotting)
