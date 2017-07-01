@@ -3,12 +3,12 @@ from neuralnet import *
 
 # 28x28 pixel images are encoded as a length-784 numpy array
 # Outputs are a length-10 numpy array corresponding to 10 decimal digits
-layer_map = [784,30,5,5,5,10]
+layer_map = [784,30,10]
 
 
 # Load data
-num_samples = 6000
-split_at = 5000
+num_samples = 60000
+split_at = 50000
 test_data = False
 training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=True)
 
