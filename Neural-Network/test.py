@@ -3,7 +3,7 @@ from neuralnet import *
 
 # 28x28 pixel images are encoded as a length-784 numpy array
 # Outputs are a length-10 numpy array corresponding to 10 decimal digits
-layer_map = [784,30,10]
+layer_map = [784,30,5,5,5,10]
 
 
 # Load data
@@ -40,9 +40,9 @@ training_label_vecs = label_to_flag_vec(training_labels)
 test_label_vecs = label_to_flag_vec(test_labels)
 
 epochs     = 30
-eta        = 1.0
-batch_size = 20
-tick       = 2
+eta        = 3.0
+batch_size = 10
+tick       = 20
 plotting = True
 
 # Train network weights and labels on training data
