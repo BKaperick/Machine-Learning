@@ -7,8 +7,8 @@ layer_map = [784,30,10]
 
 
 # Load data
-num_samples = 6000
-split_at = 5000
+num_samples = 60000
+split_at = 50000
 test_data = False
 training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=test_data)
 
@@ -36,10 +36,10 @@ def label_to_flag_vec(labels):
 training_label_vecs = label_to_flag_vec(training_labels)
 test_label_vecs = label_to_flag_vec(test_labels)
 
-epochs     = 10000
-eta        = 3.0
+epochs     = 1000
+eta        = 2.5
 batch_size = 10
-tick       = 50
+tick       = 25
 plotting = True
 
 # Train network weights and labels on training data
