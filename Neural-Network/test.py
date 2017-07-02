@@ -7,8 +7,8 @@ layer_map = [784,30,10]
 
 
 # Load data
-num_samples = 6000
-split_at = 5000
+num_samples = 60000
+split_at = 50000
 test_data = False
 training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=test_data)
 
