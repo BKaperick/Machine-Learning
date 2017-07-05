@@ -1,5 +1,6 @@
 import numpy as np
 from neuralnet import *
+from analyze_log import *
 
 # 28x28 pixel images are encoded as a length-784 numpy array
 # Outputs are a length-10 numpy array corresponding to 10 decimal digits
@@ -36,9 +37,9 @@ def label_to_flag_vec(labels):
 training_label_vecs = label_to_flag_vec(training_labels)
 test_label_vecs = label_to_flag_vec(test_labels)
 
-epochs     = 1000
+epochs     = 50
 eta        = 2.5
-batch_size = 10
+batch_size = 15
 tick       = 25
 plotting = True
 
@@ -57,7 +58,8 @@ def test_and_log_params(epochs=1000,eta=1.0,batch_size=10,tick=10, log_file = "l
     with open(log_file, "a") as f:
         f.write(out_string)
 
-for learning_rate in np.arange(.25,4.25,.5):
+for learning_rate in np.arange(.25,5.25,.25):
     print(learning_rate)
-    test_and_log_params(30,learning_rate,10,10)
+    test_and_log_params(epochs,learning_rate,batch_size,10)
 
+print_table_from_file("log.txt")
