@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import open_data
 import random
 
+from cost_metrics import *
+
 def sigmoid(z):
     ''' 
     Just a logistic function component-wise on z 
@@ -16,29 +18,8 @@ def sigmoid_deriv(z):
     ''' Recursive formulation of Sigmoid function derivative '''
     sigz = sigmoid(z)
     return sigz * (1-sigz)
+   
 
-def MSE_cost(output_emp, output_act):
-    ''' Mean squared error between empirical and actual outputs '''
-    n = output_emp.shape[1]
-    cost_val = 0
-    correct_count = 0
-    
-    for i in range(n):
-        if np.argmax(output_emp[:,i]) == np.argmax(output_act[:,i]):
-            correct_count += 1
-        term = np.linalg.norm(output_emp[:,i] - output_act[:,i])**2
-        cost_val += term
-    # Standard normalization factor
-    cost_val *= (.5/n)
-    return cost_val, correct_count
-
-def MSE_cost_gradient(output_emp, output_act):
-    ''' Gradient for Quadratic cost function defined in cost() '''
-    return output_emp - output_act
-
-
-
-    
 class Network:
     ''' 
     Feed-Forward Network -
@@ -68,6 +49,8 @@ class Network:
         
         assert(all([self.biases[i].shape[0] == self.layers[i+1] for i in range(self.num_layers - 1)]))
         assert(all([self.weights[i].shape == (self.layers[i+1],self.layers[i]) for i in range(0,self.num_layers-1)]))
+
+        self.cost_metric = MeanSquaredError
     
     def update_layers(self, weights, bias):
         ''' Update weights and biases in the neuron layers '''
@@ -117,7 +100,7 @@ class Network:
         zs = [last_weighted_input.shape]
 
         # delt_{L-1} = (a_{L-1} - y_{L-1}) * s'(z_{L-1})
-        delta_lplus1 = self.cost_gradient(layer_outputs[-1], correct_outputs) * sigmoid_deriv(last_weighted_input)
+        delta_lplus1 = self.cost_metric.gradient(layer_outputs[-1], correct_outputs) * sigmoid_deriv(last_weighted_input)
 
         # dC/dw_{L-1} = delt_{L-1} * a_{L-2}^T
         weight_grads = [np.matmul(delta_lplus1, layer_outputs[-2].T)]
@@ -178,7 +161,8 @@ class Network:
                     self.biases[i]  -= scaling * bias_grads[i]
             
             if len(test_inputs) > 0 and j % tick == 0:
-                cost, count = self.cost(test_inputs, test_outputs) 
+                cost, count = self.cost_and_count(test_inputs, test_outputs) 
+                #count = self.count(test_inputs, test_outputs, weights, biases)
                 cost_points.append( (j, cost)) 
                 if verbose:
                     print("Generation {0}: {1} ({2} / {3})".format(j, cost, count, test_inputs.shape[1]))
@@ -194,7 +178,7 @@ class Network:
             plt.xlim([0,epochs])
             plt.show()
 
-    def cost(self, inputs, correct_outputs, weights = None, biases = None):
+    def cost_and_count(self, inputs, correct_outputs, weights = None, biases = None):
         '''
         Given a set of input data and correct outputs,
         compute MSE of the difference in the actual
@@ -207,10 +191,9 @@ class Network:
         outputs = self.run(inputs, weights, biases)
         
         # Return MSE of outputs
-        return MSE_cost(outputs, correct_outputs)
-        
-    def cost_gradient(self, output_emp, output_act):
-        return MSE_cost_gradient(output_emp, output_act)
+        cost = self.cost_metric.cost(outputs, correct_outputs)
+        count = self.cost_metric.count(outputs, correct_outputs)
+        return cost, count
     
     def eval_layer(self, l, inputs):
         # Note adding a 1D ndarray to a 2D ndarray results in adding the i^th component

@@ -1,3 +1,4 @@
+import numpy as np
 
 class Cost():
     def __init__(self):
@@ -9,18 +10,17 @@ class Cost():
     def gradient(self, output_emp, output_act):
         pass
 
-class DiscreteClassifyError(Cost):
-
-    def cost(output_emp, output_act):
+    def count(output_emp, output_act):
         ''' Count of misclassifications between empirical and actual outputs '''
         correct_count = sum(output_emp.argmax(0) == output_act.argmax(0))
         return correct_count
+#class DiscreteClassifyError(Cost):
 
 class MeanSquaredError(Cost):
 
     def cost(output_emp, output_act):
         ''' Mean squared error between empirical and actual outputs '''
-        cost_val = .5 * sum(np.linalg.norm(output_emp - output_act, axis=0) ** 2) / n
+        cost_val = .5 * sum(np.linalg.norm(output_emp - output_act, axis=0) ** 2) / len(output_act)
         return cost_val
 
     def gradient(output_emp, output_act):

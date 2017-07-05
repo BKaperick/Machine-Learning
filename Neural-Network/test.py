@@ -7,8 +7,8 @@ layer_map = [784,30,10]
 
 
 # Load data
-num_samples = 60000
-split_at = 50000
+num_samples = 6000
+split_at = 5000
 test_data = False
 training_labels, training_images, test_labels, test_images = open_data.get_data(num_samples, training=True, test=test_data)
 
@@ -47,7 +47,7 @@ plotting = True
 
 def test_and_log_params(epochs=1000,eta=1.0,batch_size=10,tick=10, log_file = "log.txt"):
     network.stochastic_gradient_descent(training_images, training_label_vecs, batch_size, epochs, eta, test_images, test_label_vecs, tick=tick, verbose=False)
-    _, num_correct = network.cost(test_images, test_label_vecs)
+    _, num_correct = network.cost_and_count(test_images, test_label_vecs)
     accuracy = num_correct / test_images.shape[1]
 
     out_string = "{train_size},{test_size},{epochs},{eta},{batch_size},{accuracy}\n".format(
@@ -57,7 +57,7 @@ def test_and_log_params(epochs=1000,eta=1.0,batch_size=10,tick=10, log_file = "l
     with open(log_file, "a") as f:
         f.write(out_string)
 
-for learning_rate in np.arange(.5,4.0,.5):
+for learning_rate in np.arange(.25,4.25,.5):
     print(learning_rate)
     test_and_log_params(30,learning_rate,10,10)
 
